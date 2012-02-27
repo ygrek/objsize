@@ -1,3 +1,11 @@
-version="0.16"
-archive(byte)="objsize.cma"
-archive(native)="objsize.cmxa"
+# OASIS_START
+# DO NOT EDIT (digest: f446144a6ca2dcc72db9795f2e0afedb)
+version = "0.16"
+description = "Small library to compute sizes of OCaml heap values"
+archive(byte) = "objsize.cma"
+archive(byte, plugin) = "objsize.cma"
+archive(native) = "objsize.cmxa"
+archive(native, plugin) = "objsize.cmxs"
+exists_if = "objsize.cma"
+# OASIS_STOP
+

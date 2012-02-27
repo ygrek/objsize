@@ -1,0 +1,51 @@
+OASISFormat:  0.1
+Name:         objsize
+Version:      0.16
+#LicenseFile:  ?
+License:      BSD-3-clause
+Authors:      Dmitry Grebeniuk
+Copyrights:   (C) 2007 Dmitry Grebeniuk
+Homepage:     http://objsize.forge.ocamlcore.org/
+BuildTools:   ocamlbuild, camlp4
+Plugins:      DevFiles (0.2), META (0.2)
+
+Synopsis: Small library to compute sizes of OCaml heap values
+Description:
+  This library computes number of words occupied by heap value, size
+  of values' headers and maximal depth of values, by recursively scanning
+  heap blocks constituting the value in question.
+  There are functions to get sizes of values in bytes too.
+
+Library objsize
+  Path: .
+  Modules: Objsize
+  CCOpt: -W -Wall
+  CSources:
+    alloc.h, bitarray.h, c_objsize.c, util.h,
+    ocamlsrc/byterun/gc.h, ocamlsrc/byterun/mlvalues.h,
+    ocamlsrc/byterun/compatibility.h, ocamlsrc/byterun/config.h,
+    ocamlsrc/byterun/misc.h, ocamlsrc/byterun/memory.h,
+    ocamlsrc/byterun/major_gc.h, ocamlsrc/byterun/minor_gc.h,
+    ocamlsrc/byterun/freelist.h
+
+Executable tests
+  Path: .
+  Install: false
+  Custom: true
+  CompiledObject: best
+  MainIs: tests.ml
+  BuildDepends: objsize
+
+Test main
+  Command: $tests
+  TestTools: tests
+
+Document api
+  Title: API reference for objsize
+  Type: ocamlbuild (0.2)
+  Authors: Dmitry Grebeniuk
+  BuildTools: ocamldoc
+  Format: HTML
+  Index: index.html
+  XOCamlbuildPath: .
+  XOCamlbuildLibraries: objsize

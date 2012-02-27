@@ -7,14 +7,11 @@
 
 
 #define PRF(x) bitarray##x
-#include "bitarray.c"
+#include "bitarray.h"
 
-/*
-#include <misc.h>
-*/
 #include "util.h"
-#include <memory.h>
-#include <gc.h>
+#include "ocamlsrc/byterun/memory.h"
+#include "ocamlsrc/byterun/gc.h"
 
 #define Col_white (Caml_white >> 8)
 #define Col_gray  (Caml_gray >> 8)
