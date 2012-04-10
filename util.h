@@ -3,7 +3,7 @@
 
 #define ABORT(x) do { \
   fprintf(stderr, "aborted at %s:%i: %s\n", __FILE__, __LINE__, x); \
-  exit(1); } while(0)
+  abort(); } while(0)
 
 #define ASSERT(b, err) do { \
  if (!(b)) \
