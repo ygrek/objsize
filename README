@@ -37,13 +37,19 @@ Bugs?
      constructed at compile time and placed outside of both heaps,
      and size of these values will be returned as 0.
 
-  2. Internal function is not tail-recursive, so it uses stack
-     proportionally to the depth of the value.  (for example,
-     depth of list is equal to its length.)
-     Some not-very-general optimization could be made to handle
-     this issue for some datastructures, or library can use
-     heap memory instead of stack memory to store "walk path",
-     but I doubt it is worth to do.
+  2. Internal function is not fully tail-recursive,
+     so generally it uses stack proportionally to the depth
+     of the value.
+
+     There is an optimization to handle long lists and some
+     other datastructures: when objsize walks through the
+     structured block, the goto is used instead of recursive
+     call to walk into the last value that should be visited.
+
+     This optimization is not general, and the best solution
+     would be to use heap memory instead of stack memory to store
+     "walk path", but I don't need it now (please contribute
+     if you want).
 
   3. It requires gnu make.  It's possible to write Makefile for
      nmake, but I have no MSVC to test.  The best solution is
@@ -60,9 +66,11 @@ Bugs?
 
   5. "Bugs" section is too long.
 
+
 License?
 
   Dual: BSD/GPL.
+
 
 Changes?
 
@@ -70,6 +78,11 @@ Changes?
   0.11 - 2007-12-14 - "configure" made right. Now it works on 64-bits too.
   0.12 - 2009-04-08 - Works with OCaml 3.11, installs with findlib.
   0.13 - 2009-09-01 - Tiny change about so/dll suffix for unix/windows.
+  0.14 - 2010-01-26 - Fixing so/dll again.
+                      Some stack usage optimization,
+                      see the modified Bug #2 description.
+  0.15 - 2010-04-15 - Fixing bug appeared in 0.14. (thanks to Steven Ramsay)
+
 
 Author?
 

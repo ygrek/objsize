@@ -245,25 +245,53 @@ size_t acc_data;
 size_t acc_depth;
 
 
+#define GEN_COND(v, op) \
+        Is_block(v) \
+     && (Is_in_heap_or_young(v)) \
+     && Colornum_hd(Hd_val(v)) op Col_blue
+
+#define ENTERING_COND(v) GEN_COND(v, != )
+
+#define RESTORING_COND(v) GEN_COND(v, == )
+
+#define REC_WALK(cond, rec_call, rec_goto)                             \
+   size_t i;                                                           \
+   value next_block;                                                   \
+   next_block = Val_unit;                                              \
+                                                                       \
+   for (i=0; i<sz; ++i)                                                \
+    {                                                                  \
+    value f = Field(v,i);                                              \
+                                                                       \
+    if ( cond(f) )                                                     \
+     {                                                                 \
+     if (next_block != Val_unit)                                       \
+      {                                                                \
+      rec_call                                                         \
+      };                                                               \
+     next_block = f;                                                   \
+     };                                                                \
+    };                                                                 \
+                                                                       \
+   if (next_block != Val_unit && cond(next_block) )                    \
+    {                                                                  \
+    rec_goto                                                           \
+    };
+
+
 void c_rec_objsize(value v, size_t depth)
  {
-/*
- DBG(printf("c_rec_objsize: v=%p c=%i\n"
-   , (void*)v, Classify_addr(v))
- );
-*/
- DBG(printf("c_rec_objsize: v=%p\n"
-   , (void*)v)
- );
-
- if (Is_block(v)
-     && (Is_in_heap_or_young(v))
-     && Colornum_hd(Hd_val(v)) != Col_blue
-    )
-  {
-  size_t sz = Wosize_val(v);
   int col;
   header_t hd;
+  size_t sz;
+
+  rec_enter:
+
+  DBG(printf("c_rec_objsize: v=%p\n"
+     , (void*)v)
+  );
+
+  sz = Wosize_val(v);
 
   DBG(printf("after_if: v=%p\n", (void*)v));
 
@@ -281,39 +309,43 @@ void c_rec_objsize(value v, size_t depth)
 
   if (Tag_val(v) < No_scan_tag)
    {
-   size_t i;
-   for (i=0; i<sz; ++i)
-    {
-    /*acc +=*/ c_rec_objsize(Field(v,i), (depth+1));
-    };
+   REC_WALK
+    ( ENTERING_COND
+    , c_rec_objsize(next_block, (depth+1));
+    , v = next_block;                                          \
+      depth = depth + 1;                                       \
+      DBG(printf("goto, depth=%i\n", depth));                  \
+      goto rec_enter;
+    )
    }; /* (Tag_val(v) < No_scan_tag) */
-  };
- 
- return /*acc*/ ;
+
+ return;
  }
 
 
 void restore_colors(value v)
  {
- if (Is_block(v)
-     && (Is_in_heap_or_young(v))
-     && Colornum_hd(Hd_val(v)) == Col_blue
-    )
-  {
-  int col = readcolor();
+  int col;
+
+  rec_restore:
+
+  col = readcolor();
   DBG(printf("COL: r %08lx %i\n", v, col));
   Hd_val(v) = Coloredhd_hd(Hd_val(v), col);
 
   if (Tag_val(v) < No_scan_tag)
    {
    size_t sz = Wosize_val(v);
-   size_t i;
-   for (i=0; i<sz; ++i)
-    {
-    restore_colors(Field(v,i));
-    };
+
+   REC_WALK
+    ( RESTORING_COND
+    , restore_colors(next_block);
+    , v = next_block;                                          \
+      goto rec_restore;
+    )
+   
    };
-  };
+
  return;
  }
 
@@ -331,7 +363,10 @@ void c_objsize(value v, size_t* headers, size_t* data, size_t* depth)
  acc_data = 0;
  acc_hdrs = 0;
  acc_depth = 0;
- c_rec_objsize(v, 0);
+ if ( ENTERING_COND(v) )
+  {
+  c_rec_objsize(v, 0);
+  };
  *headers = acc_hdrs;
  *data = acc_data;
  *depth = acc_depth;
@@ -339,7 +374,10 @@ void c_objsize(value v, size_t* headers, size_t* data, size_t* depth)
  rle_write_flush();
  DBG(printf("COL reading\n"));
  rle_init();
- restore_colors(v);
+ if ( RESTORING_COND(v) )
+  {
+  restore_colors(v);
+  };
  rle_read_flush();
 
 #if DUMP

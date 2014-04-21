@@ -36,11 +36,20 @@ value genlist n =
     inner [] n
 ;
 
-print "big list" (genlist 30000)
+print "big list" (genlist 300000)
 ;
 
 print "big array" (Array.make 30000 True)
 ;
 
 print "statically created value" [1; 2; 3]
+;
+
+print "objsize 0.14 bug"
+  (let rec val_a = (val_z, val_z)
+   and val_z = (123, val_y)
+   and val_y = (234, 345)
+   in
+     val_a
+  )
 ;

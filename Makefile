@@ -1,14 +1,23 @@
 all : lib tests
 lib : objsize.cma objsize.cmxa
 
-VER=0.13
+VER=0.15
 DIST=objsize-$(VER).tar.gz
 FILES=alloc.c bitarray.c c_objsize.c Makefile objsize.ml \
       objsize.mli tests.ml util.h README ocamlsrc META
 
 .PHONY : all dist tests clean tests-installed
 
-ifeq ($(windir),)
+WIN=0
+
+ifneq ($(windir)$(WINDIR),)
+WIN=1
+endif
+ifeq ($(OSTYPE),msys)
+WIN=1
+endif
+
+ifeq ($(WIN),0)
 RUN=./
 SO=so
 else
@@ -19,6 +28,8 @@ endif
 dist : $(DIST)
 
 tests : tests.nat.exe tests.byt.exe
+	./tests.byt.exe
+	./tests.nat.exe
 
 tests-installed : clean tests-inst.byt.exe tests-inst.nat.exe
 
@@ -29,7 +40,7 @@ objsize.cmxa: c_objsize.o objsize.cmx
 	ocamlmklib -o objsize -oc objsize -linkall $^
 
 c_objsize.o : c_objsize.c bitarray.c alloc.c
-	ocamlc -c -I ./ocamlsrc/byterun c_objsize.c
+	ocamlc -ccopt -W -ccopt -Wall -c -I ./ocamlsrc/byterun c_objsize.c
 
 objsize.cmi : objsize.mli
 	ocamlc -c $<
@@ -89,7 +100,7 @@ clean :
 	  tests-inst.byt.exe tests-inst.nat.exe
 
 install : objsize.cma objsize.cmxa
-	ocamlfind install objsize META \
+	ocamlfind install -patch-version $(VER) objsize META \
 	  libobjsize.a objsize.a objsize.cma \
 	  objsize.cmi objsize.cmxa objsize.mli \
 	  -dll dllobjsize.$(SO)
