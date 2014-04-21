@@ -1,7 +1,9 @@
-/*
+
+#if 0
 #define DBG(x) do { x; fflush(stdout); } while(0)
-*/
+#else
 #define DBG(x) do{}while(0)
+#endif
 
 #define DUMP 0
 
@@ -153,7 +155,7 @@ void rle_write_flush(void)
 
 void rle_read_flush(void)
  {
- DBG(printf("rle_read_flush: repeat_count=%i, ri=%i, wi=%i\n",
+ DBG(printf("rle_read_flush: repeat_count=%i, ri=%zd, wi=%zd\n",
   repeat_count, colors_readindex, colors_writeindex)
  );
  
@@ -263,7 +265,7 @@ size_t acc_depth;
    for (i=0; i<sz; ++i)                                                \
     {                                                                  \
     f = Field(v,i);                                                    \
-    DBG(printf("(*%p)[%i/%i] = %p\n", (void*)v, i, sz, (void*)f));     \
+    DBG(printf("(*%p)[%zd/%zd] = %p\n", (void*)v, i, sz, (void*)f));   \
                                                                        \
     if ( COND_BLOCK(f) )                                               \
      {                                                                 \
@@ -316,7 +318,7 @@ void c_rec_objsize(value v, size_t depth)
     , c_rec_objsize(prev_block, (depth+1));
     , v = prev_block;                                          \
       depth = depth + 1;                                       \
-      DBG(printf("goto, depth=%i, v=%p\n", depth, (void*)v));  \
+      DBG(printf("goto, depth=%zd, v=%p\n", depth, (void*)v)); \
       goto rec_enter;
     )
    }; /* (Tag_val(v) < No_scan_tag) */
