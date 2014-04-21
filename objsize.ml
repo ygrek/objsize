@@ -16,15 +16,18 @@ type info =
   ; tags : tag_info array;
   }
 
-external internal_objsize : unit -> Obj.t -> info = "ml_objsize"
+external internal_objsize : int -> Obj.t -> info = "ml_objsize"
 
-let objsize obj = internal_objsize () (Obj.repr obj)
+let objsize_limit limit obj = internal_objsize limit (Obj.repr obj)
+let objsize obj = objsize_limit max_int obj
 
 let size_with_headers i = (Sys.word_size/8) * (i.data + i.headers)
 
 let size_without_headers i = (Sys.word_size/8) * i.data
 
-external objsize_roots : unit -> info = "ml_objsize_roots"
+external objsize_roots_limit : int -> info = "ml_objsize_roots"
+
+let objsize_roots () = objsize_roots_limit max_int
 
 let sub ?(tweak=true) a b =
   let rec merge acc l1 l2 =

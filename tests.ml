@@ -1,13 +1,23 @@
 open Printf
 ;
 
-value print title val =
-  let i = Objsize.objsize val in
+value print' ?limit title val =
+  let i = match limit with
+  [ None -> Objsize.objsize val
+  | Some limit -> Objsize.objsize_limit limit val
+  ] in
   printf "%S : data_words=%i headers=%i depth=%i\n    \
 bytes_without_headers=%i bytes_with_headers=%i\n%!"
     title i.Objsize.data i.Objsize.headers i.Objsize.depth
     (Objsize.size_without_headers i)
     (Objsize.size_with_headers i)
+;
+
+value print title val =
+  let () = print' title val in
+  for limit = 0 to 5 do
+    print' ~limit (sprintf "%s limit %d" title limit) val
+  done
 ;
 
 print "string of 13 chars" ("0123456" ^ "789012")
@@ -36,6 +46,18 @@ value genlist n =
     inner [] n
 ;
 
+type badlist = [ Cons of badlist and float | Nil ]
+;
+
+value genbadlist n =
+  let rec inner acc n =
+    if n <= 0
+    then acc
+    else inner (Cons (acc, float n)) (n-1)
+  in
+    inner Nil n
+;
+
 print "big list" (genlist 300000)
 ;
 
@@ -59,4 +81,10 @@ print "objsize 0.15 bug"
    let val_y = (val_z, val_z, fun x -> x) in
    val_y
   )
+;
+
+print' ~limit:100_000 "big list with limit 100_000" (genlist 300_000)
+;
+
+print' ~limit:100_000 "big bad list with limit 100_000" (genbadlist 200_000)
 ;

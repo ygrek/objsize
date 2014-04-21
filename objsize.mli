@@ -18,6 +18,15 @@ type info =
 (** Returns information for first argument. *)
 val objsize : 'a -> info
 
+(** [objsize_limit limit v] 
+    @return memory usage information for [v].
+    @param [limit] limits the maximum depth to follow (to prevent excess
+    stack usage). If maximum depth is reached during heap traversal then the
+    returned result may be less than actual. One can detect this
+    situation by comparing returned {!depth} with the limit.
+    @since 0.17 *)
+val objsize_limit : int -> 'a -> info
+
 (** Calculate sizes in bytes *)
 val size_with_headers : info -> int
 val size_without_headers : info -> int
@@ -25,6 +34,14 @@ val size_without_headers : info -> int
 (** Walk through all the roots and return information for the whole heap.
     @since 0.17 *)
 val objsize_roots : unit -> info
+
+(** Walk through all the roots and return information for the whole heap.
+    Integer parameter limits the maximum depth to follow (to prevent excess
+    stack usage). If maximum depth is reached during heap traversal then the
+    returned result may be less than actual. One can detect this
+    situation by comparing returned {!depth} with the limit.
+    @since 0.17 *)
+val objsize_roots_limit : int -> info
 
 (** [sub next base] calculate [next - base], i.e. the changes from [base] to [next].
     @param tweak account for the memory occupied by one [info] structure, default true

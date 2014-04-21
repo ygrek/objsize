@@ -190,7 +190,6 @@ void rle_write(int color)
  }
 
 
-int rle_read(void);
 int rle_read(void)
  {
  if (repeat_count > 0)
@@ -248,6 +247,7 @@ int readcolor(void)
 size_t acc_hdrs;
 size_t acc_data;
 size_t acc_depth;
+size_t g_limit_depth;
 size_t acc_tags[256];
 size_t acc_size[256];
 
@@ -297,6 +297,8 @@ void c_rec_objsize(value v, size_t depth)
   header_t hd;
   size_t sz;
 
+  if (depth >= g_limit_depth) return;
+
   rec_enter:
 
   DBG(printf("c_rec_objsize: v=%p\n"
@@ -341,9 +343,11 @@ void c_rec_objsize(value v, size_t depth)
  }
 
 
-void restore_colors(value v)
+void restore_colors(value v, size_t depth)
  {
   int col;
+
+  if (depth >= g_limit_depth) return;
 
   rec_restore:
 
@@ -357,8 +361,9 @@ void restore_colors(value v)
 
    REC_WALK
     ( RESTORING_COND_NOTVISITED
-    , restore_colors(prev_block);
+    , restore_colors(prev_block, (depth + 1));
     , v = prev_block;                                          \
+      depth = depth + 1; \
       goto rec_restore;
     )
 
@@ -389,7 +394,7 @@ void objsize_restore_action(value v, value* unused)
  DBG(printf("COL reading\n"));
  if ( COND_BLOCK(v) && RESTORING_COND_NOTVISITED(v) )
   {
-  restore_colors(v);
+  restore_colors(v, 0);
   };
 
 #if DUMP
@@ -404,21 +409,22 @@ void objsize_restore_action(value v, value* unused)
 #endif
 }
 
-void acc_reset()
+void acc_reset(size_t limit_depth)
 {
   acc_hdrs = 0;
   acc_data = 0;
   acc_depth = 0;
+  g_limit_depth = limit_depth;
 
   memset(acc_tags, 0, sizeof(acc_tags));
   memset(acc_size, 0, sizeof(acc_size));
 }
 
-void c_objsize(value v)
+void c_objsize(size_t limit_depth, value v)
  {
    DBG(printf("c_objsize %p\n", (void*)v));
 
-   acc_reset();
+   acc_reset(limit_depth);
    colors_init();
    rle_init();
    objsize_mark_action(v, NULL);
@@ -436,14 +442,14 @@ void c_objsize(value v)
 
 #include <caml/alloc.h>
 
-void c_objsize_roots()
+void c_objsize_roots(size_t limit_depth)
 {
 #if 0
   int i;
   size_t sum_data = 0, sum_hdrs = 0;
 #endif
 
-  acc_reset();
+  acc_reset(limit_depth);
   colors_init();
   rle_init();
   caml_do_roots(objsize_mark_action);
@@ -511,18 +517,18 @@ value make_caml_result()
   CAMLreturn(res);
 }
 
-value ml_objsize_roots(CAMLunused value unit)
+value ml_objsize_roots(value limit)
 {
-  c_objsize_roots();
+  c_objsize_roots(Long_val(limit));
 
   return make_caml_result();
 }
 
-value ml_objsize(CAMLunused value options, value start)
+value ml_objsize(value limit, value start)
  {
- CAMLparam2(options, start);
+ CAMLparam2(limit, start);
  
- c_objsize(start);
+ c_objsize(Long_val(limit),start);
 
  CAMLreturn(make_caml_result());
  }
