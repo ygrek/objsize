@@ -2,7 +2,7 @@ OASISFormat:  0.1
 Name:         objsize
 Version:      0.16
 #LicenseFile:  ?
-License:      BSD-3-clause
+License:      BSD-3-clause or GPL
 Authors:      Dmitry Grebeniuk
 Copyrights:   (C) 2007 Dmitry Grebeniuk
 Homepage:     http://objsize.forge.ocamlcore.org/
