@@ -53,3 +53,10 @@ print "objsize 0.14 bug"
      val_a
   )
 ;
+
+print "objsize 0.15 bug"
+  (let val_z = ((), ()) in
+   let val_y = (val_z, val_z, fun x -> x) in
+   val_y
+  )
+;

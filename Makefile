@@ -1,7 +1,7 @@
 all : lib tests
 lib : objsize.cma objsize.cmxa
 
-VER=0.15
+VER=0.16
 DIST=objsize-$(VER).tar.gz
 FILES=alloc.c bitarray.c c_objsize.c Makefile objsize.ml \
       objsize.mli tests.ml util.h README ocamlsrc META
@@ -28,8 +28,8 @@ endif
 dist : $(DIST)
 
 tests : tests.nat.exe tests.byt.exe
-	./tests.byt.exe
 	./tests.nat.exe
+	CAML_LD_LIBRARY_PATH=. ./tests.byt.exe
 
 tests-installed : clean tests-inst.byt.exe tests-inst.nat.exe
 

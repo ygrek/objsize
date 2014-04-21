@@ -245,35 +245,40 @@ size_t acc_data;
 size_t acc_depth;
 
 
-#define GEN_COND(v, op) \
-        Is_block(v) \
-     && (Is_in_heap_or_young(v)) \
-     && Colornum_hd(Hd_val(v)) op Col_blue
+#define COND_BLOCK(q) \
+   (    Is_block(q) \
+     && (Is_in_heap_or_young(q)) \
+   )
 
-#define ENTERING_COND(v) GEN_COND(v, != )
+#define GEN_COND_NOTVISITED(v, op) \
+    ( Colornum_hd(Hd_val(v)) op Col_blue )
 
-#define RESTORING_COND(v) GEN_COND(v, == )
+#define ENTERING_COND_NOTVISITED(v) GEN_COND_NOTVISITED(v, != )
 
-#define REC_WALK(cond, rec_call, rec_goto)                             \
+#define RESTORING_COND_NOTVISITED(v) GEN_COND_NOTVISITED(v, == )
+
+#define REC_WALK(cond_notvisited, rec_call, rec_goto)                  \
    size_t i;                                                           \
-   value next_block;                                                   \
-   next_block = Val_unit;                                              \
+   value prev_block;                                                   \
+   value f;                                                            \
+   prev_block = Val_unit;                                              \
                                                                        \
    for (i=0; i<sz; ++i)                                                \
     {                                                                  \
-    value f = Field(v,i);                                              \
+    f = Field(v,i);                                                    \
+    DBG(printf("(*%p)[%i/%i] = %p\n", (void*)v, i, sz, (void*)f));     \
                                                                        \
-    if ( cond(f) )                                                     \
+    if ( COND_BLOCK(f) )                                               \
      {                                                                 \
-     if (next_block != Val_unit)                                       \
+     if (prev_block != Val_unit && cond_notvisited(prev_block))        \
       {                                                                \
       rec_call                                                         \
       };                                                               \
-     next_block = f;                                                   \
-     };                                                                \
+     prev_block = f;                                                   \
+     };  /* if ( COND_BLOCK ) */                                       \
     };                                                                 \
                                                                        \
-   if (next_block != Val_unit && cond(next_block) )                    \
+   if (prev_block != Val_unit && cond_notvisited(prev_block) )         \
     {                                                                  \
     rec_goto                                                           \
     };
@@ -310,11 +315,11 @@ void c_rec_objsize(value v, size_t depth)
   if (Tag_val(v) < No_scan_tag)
    {
    REC_WALK
-    ( ENTERING_COND
-    , c_rec_objsize(next_block, (depth+1));
-    , v = next_block;                                          \
+    ( ENTERING_COND_NOTVISITED
+    , c_rec_objsize(prev_block, (depth+1));
+    , v = prev_block;                                          \
       depth = depth + 1;                                       \
-      DBG(printf("goto, depth=%i\n", depth));                  \
+      DBG(printf("goto, depth=%i, v=%p\n", depth, (void*)v));  \
       goto rec_enter;
     )
    }; /* (Tag_val(v) < No_scan_tag) */
@@ -338,9 +343,9 @@ void restore_colors(value v)
    size_t sz = Wosize_val(v);
 
    REC_WALK
-    ( RESTORING_COND
-    , restore_colors(next_block);
-    , v = next_block;                                          \
+    ( RESTORING_COND_NOTVISITED
+    , restore_colors(prev_block);
+    , v = prev_block;                                          \
       goto rec_restore;
     )
    
@@ -363,7 +368,7 @@ void c_objsize(value v, size_t* headers, size_t* data, size_t* depth)
  acc_data = 0;
  acc_hdrs = 0;
  acc_depth = 0;
- if ( ENTERING_COND(v) )
+ if ( COND_BLOCK(v) )
   {
   c_rec_objsize(v, 0);
   };
@@ -374,7 +379,7 @@ void c_objsize(value v, size_t* headers, size_t* data, size_t* depth)
  rle_write_flush();
  DBG(printf("COL reading\n"));
  rle_init();
- if ( RESTORING_COND(v) )
+ if ( COND_BLOCK(v) )
   {
   restore_colors(v);
   };
