@@ -69,6 +69,7 @@ Changes?
   0.1  - 2007-12-13 - Initial public release.
   0.11 - 2007-12-14 - "configure" made right. Now it works on 64-bits too.
   0.12 - 2009-04-08 - Works with OCaml 3.11, installs with findlib.
+  0.13 - 2009-09-01 - Tiny change about so/dll suffix for unix/windows.
 
 Author?
 

@@ -1,7 +1,7 @@
 all : lib tests
 lib : objsize.cma objsize.cmxa
 
-VER=0.12
+VER=0.13
 DIST=objsize-$(VER).tar.gz
 FILES=alloc.c bitarray.c c_objsize.c Makefile objsize.ml \
       objsize.mli tests.ml util.h README ocamlsrc META
@@ -10,8 +10,10 @@ FILES=alloc.c bitarray.c c_objsize.c Makefile objsize.ml \
 
 ifeq ($(windir),)
 RUN=./
+SO=so
 else
 RUN=.\\
+SO=dll
 endif
 
 dist : $(DIST)
@@ -90,7 +92,7 @@ install : objsize.cma objsize.cmxa
 	ocamlfind install objsize META \
 	  libobjsize.a objsize.a objsize.cma \
 	  objsize.cmi objsize.cmxa objsize.mli \
-	  -dll dllobjsize.dll
+	  -dll dllobjsize.$(SO)
 
 uninstall :
 	ocamlfind remove objsize
