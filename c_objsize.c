@@ -14,12 +14,18 @@
 #include "util.h"
 #include "ocamlsrc/byterun/memory.h"
 #include "ocamlsrc/byterun/gc.h"
+#include <memory.h>
 
 #define Col_white (Caml_white >> 8)
 #define Col_gray  (Caml_gray >> 8)
 #define Col_blue  (Caml_blue >> 8)
 #define Col_black (Caml_black >> 8)
 
+/*
+ * from roots.h
+ */
+typedef void (*scanning_action) (value, value *);
+void caml_do_roots (scanning_action);
 
 #define COLORS_INIT_COUNT 256
 
@@ -242,6 +248,8 @@ int readcolor(void)
 size_t acc_hdrs;
 size_t acc_data;
 size_t acc_depth;
+size_t acc_tags[256];
+size_t acc_size[256];
 
 
 #define COND_BLOCK(q) \
@@ -302,11 +310,17 @@ void c_rec_objsize(value v, size_t depth)
   acc_data += sz;
   ++acc_hdrs;
   if (depth > acc_depth) { acc_depth = depth; };
-  
+
+  //ASSERT(Is_block(v), "scanning_hook is_block");
+  //ASSERT(Tag_val(v) < 256, "Tag_val < 256");
+  //printf("value %p tag %d size %ld\n", (void*)v, Tag_val(v), Wosize_val(v));
+  acc_tags[Tag_val(v)]++;
+  acc_size[Tag_val(v)]+=Wosize_val(v);
+
   hd = Hd_val(v);
   col = Colornum_hd(hd);
   writecolor(col);
-  
+
   DBG(printf("COL: w %08lx %i\n", v, col));
 
   Hd_val(v) = Coloredhd_hd(hd, Col_blue);
@@ -347,42 +361,36 @@ void restore_colors(value v)
     , v = prev_block;                                          \
       goto rec_restore;
     )
-   
+
    };
 
  return;
  }
 
 
-void c_objsize(value v, size_t* headers, size_t* data, size_t* depth)
- {
- colors_init();
- rle_init();
+void objsize_mark_action(value v, value* unused)
+{
+ (void)unused;
  /*
  DBG(printf("young heap from %p to %p\n", caml_young_start, caml_young_end));
  DBG(printf("old heap from %p to %p\n", caml_heap_start, caml_heap_end));
  */
  DBG(printf("COL writing\n"));
 
- acc_data = 0;
- acc_hdrs = 0;
- acc_depth = 0;
- if ( COND_BLOCK(v) )
+ if ( COND_BLOCK(v) && ENTERING_COND_NOTVISITED(v) )
   {
   c_rec_objsize(v, 0);
   };
- *headers = acc_hdrs;
- *data = acc_data;
- *depth = acc_depth;
- 
- rle_write_flush();
+}
+
+void objsize_restore_action(value v, value* unused)
+{
+ (void)unused;
  DBG(printf("COL reading\n"));
- rle_init();
- if ( COND_BLOCK(v) )
+ if ( COND_BLOCK(v) && RESTORING_COND_NOTVISITED(v) )
   {
   restore_colors(v);
   };
- rle_read_flush();
 
 #if DUMP
  printf("objsize: bytes for rle data = %i\n", colors_readindex/8);
@@ -394,29 +402,128 @@ void c_objsize(value v, size_t* headers, size_t* data, size_t* depth)
   fclose(f);
   };
 #endif
- 
- colors_deinit();
- DBG(printf("c_objsize done.\n"));
+}
 
- return;
+void acc_reset()
+{
+  acc_hdrs = 0;
+  acc_data = 0;
+  acc_depth = 0;
+
+  memset(acc_tags, 0, sizeof(acc_tags));
+  memset(acc_size, 0, sizeof(acc_size));
+}
+
+void c_objsize(value v)
+ {
+   DBG(printf("c_objsize %p\n", (void*)v));
+
+   acc_reset();
+   colors_init();
+   rle_init();
+   objsize_mark_action(v, NULL);
+   rle_write_flush();
+
+   rle_init();
+   objsize_restore_action(v, NULL);
+   rle_read_flush();
+   colors_deinit();
+
+   DBG(printf("c_objsize done.\n"));
+
+   return;
  }
 
-
 #include <caml/alloc.h>
+
+void c_objsize_roots()
+{
+#if 0
+  int i;
+  size_t sum_data = 0, sum_hdrs = 0;
+#endif
+
+  acc_reset();
+  colors_init();
+  rle_init();
+  caml_do_roots(objsize_mark_action);
+  rle_write_flush();
+  rle_init();
+  caml_do_roots(objsize_restore_action);
+  rle_read_flush();
+  colors_deinit();
+
+#if 0
+  DBG(printf("objsize_iter_roots : %zd %zd %zd\n", acc_data, acc_hdrs, acc_depth));
+  for (i = 0; i < 256; i++)
+  {
+    sum_hdrs += acc_tags[i];
+    sum_data += acc_size[i];
+    if (acc_tags[i])
+      DBG(printf("Tag %d : %zd : %zd\n", i, acc_tags[i], acc_size[i]));
+  }
+  ASSERT(sum_data == acc_data, "sum acc_data");
+  ASSERT(sum_hdrs == acc_hdrs, "sum acc_hdrs");
+#endif
+}
+
+value make_caml_result()
+{
+  CAMLparam0();
+  CAMLlocal3(res, arr, v);
+  int size, i, j;
+
+  size = 0;
+  for (i = 0; i < 256; i++)
+  {
+    if (0 == i || acc_tags[i]) size++;
+  }
+
+#if 0
+  /* correction for the values allocated in this function */
+  acc_tags[0] += size + 2;
+  acc_size[0] += 4 * size + 4;
+  acc_hdrs += size + 2;
+  acc_data += 4 * size + 4;
+#endif
+
+  arr = caml_alloc_tuple(size);
+  j = 0;
+  for (i = 0; i < 256; i++)
+  {
+    if (0 == i || acc_tags[i])
+    {
+      ASSERT(j < size, "output index");
+      v = caml_alloc_small(3, 0);
+      Field(v, 0) = Val_int(i);
+      Field(v, 1) = Val_int(acc_tags[i]);
+      Field(v, 2) = Val_int(acc_size[i]);
+      Store_field(arr, j++, v);
+    }
+  }
+
+  res = caml_alloc_small(4, 0);
+  Field(res, 0) = Val_int(acc_data);
+  Field(res, 1) = Val_int(acc_hdrs);
+  Field(res, 2) = Val_int(acc_depth);
+  Field(res, 3) = arr;
+
+  CAMLreturn(res);
+}
+
+value ml_objsize_roots(CAMLunused value unit)
+{
+  c_objsize_roots();
+
+  return make_caml_result();
+}
 
 value ml_objsize(CAMLunused value options, value start)
  {
  CAMLparam2(options, start);
- CAMLlocal1(res);
- size_t hdrs, data, depth;
  
- c_objsize(start, &hdrs, &data, &depth);
- 
- res = caml_alloc_small(3, 0);
- Field(res, 0) = Val_int(data);
- Field(res, 1) = Val_int(hdrs);
- Field(res, 2) = Val_int(depth);
+ c_objsize(start);
 
- CAMLreturn(res);
+ CAMLreturn(make_caml_result());
  }
 
