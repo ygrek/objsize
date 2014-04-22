@@ -1,9 +1,10 @@
 What is this?
 
-  This is a small OCaml library for computing size of OCaml values.
+  This is a small library for computing size of OCaml heap values.
   It computes count of words used for values, count of values' headers,
   maximal depth of values.  There are functions to get size of values
-  in bytes too.
+  in bytes too. It is also possible to calculate the total amount of 
+  heap memory used by live values reachable from GC roots.
 
 
 How to use it?
@@ -13,14 +14,9 @@ How to use it?
 
 How to compile/install it?
 
-  Run "make <target>" in this directory.  Useful make targets are:
-  - lib : build objsize library
-  - tests : build tests with fresh-compiled library
-  - install : install package "objsize" using findlib
-  - uninstall : uninstall package "objsize"
-  - clean : clean working directory
-  - tests-installed : clean working directory and build test programs
-      assuming you have installed package "objsize" using findlib.
+  OASIS build system provides for usual:
+
+  ./configure && make && make install
 
 
 How it works?
@@ -51,20 +47,11 @@ Bugs?
      "walk path", but I don't need it now (please contribute
      if you want).
 
-  3. It requires gnu make.  It's possible to write Makefile for
-     nmake, but I have no MSVC to test.  The best solution is
-     to use ocamlbuild.  Either I will write ocamlbuild script
-     later, or you will contribute it.  But it's possible
-     to build without any makefiles: see original Makefile for
-     details.
-
-  4. OCaml 3.11 has new implementation of heap.  Versions of
+  3. OCaml 3.11 has new implementation of heap.  Versions of
      objsize >= 0.12 work only with OCaml 3.11 heap, versions
      of objsize <= 0.11 work only with OCaml <= 3.10.2 heap.
      Runtime failure will be raised if you link objsize >= 0.12
      with OCaml < 3.11.
-
-  5. "Bugs" section is too long.
 
 
 License?
@@ -81,8 +68,9 @@ Changes?
   0.14 - 2010-01-26 - Fixing so/dll again.
                       Some stack usage optimization,
                       see the modified Bug #2 description.
-  0.15 - 2010-04-15 - Fixing bug appeared in 0.14. (thanks to Steven Ramsay)
-  0.16 - 2010-08-11 - Fixing bug appeared in 0.14. (thanks to SerP)
+  0.15 - 2010-04-15 - Fix bug introduced in 0.14. (thanks to Steven Ramsay)
+  0.16 - 2010-08-11 - Fix bug introduced in 0.14. (thanks to SerP)
+  0.17 - 2014-04-23 - New functions objsize_roots and objsize_limit. (ygrek)
 
 Author?
 
