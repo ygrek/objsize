@@ -1,4 +1,4 @@
-(** Small library to calculate memory usage of OCaml heap values *)
+(** Compute memory usage of OCaml heap values (by recursively inspecting runtime representation) *)
 
 
 type tag_info = {
@@ -20,14 +20,14 @@ val objsize : 'a -> info
 
 (** [objsize_limit limit v] 
     @return memory usage information for [v].
-    @param [limit] limits the maximum depth to follow (to prevent excess
+    [limit] limits the maximum depth to follow (to prevent excess
     stack usage). If maximum depth is reached during heap traversal then the
     returned result may be less than actual. One can detect this
-    situation by comparing returned {!depth} with the limit.
+    situation by comparing returned depth against the limit.
     @since 0.17 *)
 val objsize_limit : int -> 'a -> info
 
-(** Calculate sizes in bytes *)
+(** Calculate size in bytes *)
 val size_with_headers : info -> int
 val size_without_headers : info -> int
 
@@ -39,7 +39,7 @@ val objsize_roots : unit -> info
     Integer parameter limits the maximum depth to follow (to prevent excess
     stack usage). If maximum depth is reached during heap traversal then the
     returned result may be less than actual. One can detect this
-    situation by comparing returned {!depth} with the limit.
+    situation by comparing returned depth against the limit.
     @since 0.17 *)
 val objsize_roots_limit : int -> info
 
