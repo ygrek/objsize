@@ -21,12 +21,7 @@ Library objsize
   Modules: Objsize
   CCOpt: -W -Wall -Wextra -g
   CSources:
-    alloc.h, bitarray.h, c_objsize.c, util.h,
-    ocamlsrc/byterun/gc.h, ocamlsrc/byterun/mlvalues.h,
-    ocamlsrc/byterun/compatibility.h, ocamlsrc/byterun/config.h,
-    ocamlsrc/byterun/misc.h, ocamlsrc/byterun/memory.h,
-    ocamlsrc/byterun/major_gc.h, ocamlsrc/byterun/minor_gc.h,
-    ocamlsrc/byterun/freelist.h
+    alloc.h, bitarray.h, c_objsize.c, util.h
 
 Executable tests
   Path: .

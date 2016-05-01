@@ -1,8 +1,9 @@
 # OASIS_START
-# DO NOT EDIT (digest: d3ee922c67fa9efcae95095c7b866b2e)
+# DO NOT EDIT (digest: ee7899eb6f18e7274cd2eb916e8f58d0)
 # Ignore VCS directories, you can use the same kind of rule outside
 # OASIS_START/STOP if you want to exclude directories that contains
 # useless stuff for the build process
+true: annot, bin_annot
 <**/.svn>: -traverse
 <**/.svn>: not_hygienic
 ".bzr": -traverse
@@ -15,12 +16,12 @@
 "_darcs": not_hygienic
 # Library objsize
 "objsize.cmxs": use_objsize
-<*.ml{,i}>: oasis_library_objsize_ccopt
+<*.ml{,i,y}>: oasis_library_objsize_ccopt
 "c_objsize.c": oasis_library_objsize_ccopt
 <objsize.{cma,cmxa}>: use_libobjsize_stubs
 # Executable tests
 <tests.{native,byte}>: use_objsize
-<*.ml{,i}>: use_objsize
+<*.ml{,i,y}>: use_objsize
 <tests.{native,byte}>: custom
 # OASIS_STOP
 "tests.ml": camlp4r
