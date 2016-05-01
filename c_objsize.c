@@ -11,9 +11,12 @@
 #define PRF(x) bitarray##x
 #include "bitarray.h"
 
+#include <caml/mlvalues.h>
+#include <caml/gc.h>
+#include <caml/memory.h>
+#include <caml/address_class.h>
+
 #include "util.h"
-#include "ocamlsrc/byterun/memory.h"
-#include "ocamlsrc/byterun/gc.h"
 #include <memory.h>
 
 #define Col_white (Caml_white >> 8)
