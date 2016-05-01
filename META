@@ -1,6 +1,6 @@
 # OASIS_START
-# DO NOT EDIT (digest: a3c64beef7845b992bb013e0b044ef09)
-version = "0.17"
+# DO NOT EDIT (digest: aad09950f5a216acba0e1fb9b5b3a5ba)
+version = "0.18"
 description = "Small library to compute sizes of OCaml heap values"
 archive(byte) = "objsize.cma"
 archive(byte, plugin) = "objsize.cma"

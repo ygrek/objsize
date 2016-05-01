@@ -71,6 +71,7 @@ Changes?
   0.15 - 2010-04-15 - Fix bug introduced in 0.14. (thanks to Steven Ramsay)
   0.16 - 2010-08-11 - Fix bug introduced in 0.14. (thanks to SerP)
   0.17 - 2014-04-23 - New functions objsize_roots and objsize_limit. (ygrek)
+  0.18 - 2016-05-01 - OCaml 4.03 compatibility
 
 Author?
 
