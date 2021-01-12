@@ -7,9 +7,9 @@ synopsis: "Small library to compute sizes of OCaml heap values"
 homepage: "https://github.com/ygrek/objsize"
 bug-reports: "https://github.com/ygrek/objsize/issues"
 build: [
-  ["dune" "build" "@install" "-p" name "-j" job]
-  ["dune" "build" "@doc" "-p" name "-j" job] {with-doc}
-  ["dune" "runtest" "-p" name "-j" job] {with-test}
+  ["dune" "build" "@install" "-p" name "-j" jobs]
+  ["dune" "build" "@doc" "-p" name "-j" jobs] {with-doc}
+  ["dune" "runtest" "-p" name "-j" jobs] {with-test}
 ]
 depends: [
   "ocaml" { >= "4.03" }
