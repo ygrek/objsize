@@ -1,0 +1,6 @@
+
+(library
+  (name objsize)
+  (public_name objsize)
+  (foreign_stubs (language c) (names c_objsize) (flags -O1 -W -Wall -Werror))
+  (flags :standard -warn-error -a+8))

@@ -1,0 +1,9 @@
+(executable
+  (name tests)
+  (modes native)
+  (libraries objsize)
+  (flags :standard -warn-error -a+8))
+
+(rule
+  (alias runtest)
+  (action (run ./tests.exe)))
